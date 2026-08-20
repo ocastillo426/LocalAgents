@@ -1,5 +1,5 @@
 from memory import init_chat_db, init_vector_db, add_to_knowledge_base
-from mac_tools import get_all_note_names, get_apple_note
+from mac_tools import get_ai_folder_notes, get_apple_calendar_events
 from llm_router import query_desktop_gpu
 
 if __name__ == "__main__":
@@ -9,18 +9,28 @@ if __name__ == "__main__":
     vector_collection = init_vector_db()
 
     # --- AUTOMATED RAG INGESTION PIPELINE ---
-    all_titles = get_all_note_names()
+    ai_notes = get_ai_folder_notes(folder_name="AI Notes")
 
-    print(f"--> Found {len(all_titles)} notes. Syncing to vector memory...")
-    for i, title in enumerate(all_titles):
-        text = get_apple_note(title)
-        if text and not text.startswith("Error"):
-            add_to_knowledge_base(
-                vector_collection,
-                document_text=text,
-                doc_id=f"note_{i}",
-                source_name=title
-            )
+    print(f"--> Syncing {len(ai_notes)} notes from 'AI Notes' to vector memory...")
+    for i, note in enumerate(ai_notes):
+        add_to_knowledge_base(
+            vector_collection,
+            document_text=note["content"],
+            doc_id=f"ai_note_{i}",
+            source_name=note["title"]
+        )
+
+    # --- CALENDAR INGESTION ---
+    calendar_text = get_apple_calendar_events(calendar_name="7shifts")
+
+    if calendar_text and not calendar_text.startswith("Error"):
+        add_to_knowledge_base(
+            vector_collection,
+            document_text=calendar_text,
+            doc_id="apple_calendar_7shifts",
+            source_name="Apple Calendar"
+        )
+
     print("--> Sync complete! Agent is ready.\n")
     # ----------------------------------------
 

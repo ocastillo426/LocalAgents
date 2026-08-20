@@ -59,11 +59,13 @@ def add_to_knowledge_base(collection, document_text, doc_id, source_name):
     print(f"[*] Saved '{source_name}' to long-term memory!")
 
 
-def search_knowledge_base(collection, query_text, n_results=1):
+def search_knowledge_base(collection, query_text, n_results=2):
+    """Searches the vector database and joins top matches into a single context string."""
     results = collection.query(
         query_texts=[query_text],
         n_results=n_results
     )
     if results['documents'] and results['documents'][0]:
-        return results['documents'][0][0]
+        # Join retrieved doc fragments cleanly
+        return "\n---\n".join(doc for doc in results['documents'][0] if doc)
     return ""
